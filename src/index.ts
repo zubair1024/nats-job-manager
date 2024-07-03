@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 import configuration from './utils/configuration';
 import logger from './utils/logger';
 
