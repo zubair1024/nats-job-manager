@@ -1,0 +1,35 @@
+services:
+  na_1:
+    image: nats:latest
+    ports:
+      - '4222:4222'
+      - '6222:6222'
+    volumes:
+      - .nats/server.conf:/etc/server.conf
+    command: '--config /etc/server.conf --name na_1 -p 4222'
+    networks:
+      - nats
+  na_2:
+    image: nats:latest
+    ports:
+      - '4223:4223'
+      - '6223:6223'
+    volumes:
+      - .nats/server.conf:/etc/server.conf
+    command: '--config /etc/server.conf --name na_2 -p 4223'
+    networks:
+      - nats
+  na_3:
+    image: nats:latest
+    ports:
+      - '4224:4224'
+      - '6224:6224'
+    volumes:
+      - .nats/server.conf:/etc/server.conf
+    command: '--config /etc/server.conf --name na_3 -p 4224'
+    networks:
+      - nats
+
+networks:
+  nats:
+    driver: bridge

@@ -7,11 +7,8 @@ class CacheManager extends NatsClient {
   }
 
   async init(): Promise<void> {
-    await this.connect();
-    if (!this.jsm) {
-      this.jsm = (await this.client?.jetstreamManager()) ?? null;
-      this.kv = (await this.client?.jetstream().views.kv('my_kv_store')) ?? null;
-    }
+    const js = await this.getJetStreamClient();
+    this.kv = (await js.views.kv('my_kv_store')) ?? null;
   }
 
   public async get<T>(key: string): Promise<T | null> {

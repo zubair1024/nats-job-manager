@@ -3,6 +3,7 @@ import process from 'node:process';
 import configuration from './utils/configuration';
 import logger from './utils/logger';
 import cacheManager from './cacheManager';
+import jobManager from './jobManager';
 
 async function main() {
   logger.info(`App running in ${configuration.env} env!`);
@@ -13,6 +14,7 @@ async function main() {
   console.log(`getting cache value`);
   const test = await cacheManager.get<{ test: string }>('test');
   console.log(test);
+  await jobManager.forkExclusiveConsumer('JOBS');
 }
 
 process.on('uncaughtException', (error: unknown) => {
