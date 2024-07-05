@@ -14,7 +14,9 @@ async function main() {
   console.log(`getting cache value`);
   const test = await cacheManager.get<{ test: string }>('test');
   console.log(test);
-  await jobManager.forkExclusiveConsumer('JOBS');
+  await jobManager.forkExclusiveConsumer<{ test: string }>('JOBS', async function (msg) {
+    console.log(msg);
+  });
 }
 
 process.on('uncaughtException', (error: unknown) => {

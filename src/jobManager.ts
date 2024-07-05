@@ -22,53 +22,58 @@ class JobManager extends NatsClient {
       ackPolicy?: AckPolicy;
     },
   ): Promise<void> {
-    const jsm = await this.getJetStreamManager();
     try {
-      const info = await jsm?.consumers.info('JOBS', queueName);
-      console.log('Consumer already exists:', info);
-    } catch (err) {
-      if (err instanceof NatsError && err.code === '404') {
-        console.log('Consumer does not exist, creating...');
-      } else {
-        console.error('Error checking consumer info:', err);
-        return;
-      }
-    }
-
-    try {
-      await jsm.consumers.add(queueName, {
-        durable_name: queueName,
-        ack_policy: opts?.ackPolicy ?? AckPolicy.Explicit,
-      });
-    } catch (err) {
-      if (err instanceof NatsError && err.code === '404') {
-        console.log('Stream does not exist, creating...');
-        await this.createJobStream(queueName, [queueName]);
-        return this.forkExclusiveConsumer(queueName, callback, opts);
-      } else {
-        throw err;
-      }
-    }
-
-    const js = await this.getJetStreamClient();
-
-    const consumer = await js.consumers.get(queueName, queueName);
-    void consumer.consume({
-      callback: async (m: JsMsg) => {
-        try {
-          //   const msg = JSONCodec<T>().decode(m.data);
-          //   await callback(msg);
-        } catch (err) {
-          console.error('Error processing message:', err);
+      const jsm = await this.getJetStreamManager();
+      try {
+        const info = await jsm?.consumers.info('JOBS', queueName);
+        console.log('Consumer already exists:', info);
+      } catch (err) {
+        if (err instanceof NatsError && err.code === '404') {
+          console.log('Consumer does not exist, creating...');
+        } else {
+          console.error('Error checking consumer info:', err);
+          return;
         }
-        console.log(`Consumed message ${m.seq}`);
-        // ack the message either way to prevent redelivery
-        // m.ack();
-        await this.jsm?.streams.deleteMessage(queueName, m.seq);
-      },
-    });
+      }
 
-    console.log(`Subscribed to ${queueName}`);
+      try {
+        await jsm.consumers.add(queueName, {
+          durable_name: queueName,
+          ack_policy: opts?.ackPolicy ?? AckPolicy.Explicit,
+        });
+      } catch (err) {
+        if (err instanceof NatsError && err.code === '404') {
+          console.log('Stream does not exist, creating...');
+          await this.createJobStream(queueName, [queueName]);
+          return this.forkExclusiveConsumer(queueName, callback, opts);
+        } else {
+          throw err;
+        }
+      }
+
+      const js = await this.getJetStreamClient();
+
+      const consumer = await js.consumers.get(queueName, queueName);
+      void consumer.consume({
+        callback: async (m: JsMsg) => {
+          try {
+            const msg = JSONCodec<T>().decode(m.data);
+            await callback(msg);
+          } catch (err) {
+            console.error('Error processing message:', err);
+          }
+          console.log(`Consumed message ${m.seq}`);
+          // ack the message either way to prevent redelivery
+          // m.ack();
+          await this.jsm?.streams.deleteMessage(queueName, m.seq);
+        },
+      });
+
+      console.log(`Subscribed to ${queueName}`);
+    } catch (err) {
+      console.log(err);
+      this.forkExclusiveConsumer(queueName, callback, opts);
+    }
   }
 }
 
