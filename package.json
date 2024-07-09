@@ -11,7 +11,7 @@
     "format": "prettier --check ./src/*",
     "format:fix": "prettier --write ./src/*",
     "prepare": "husky",
-    "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/index.ts"
+    "dev": "NODE_OPTIONS=--max-old-space-size=8000 ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/index.ts"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": "eslint --cache --fix",

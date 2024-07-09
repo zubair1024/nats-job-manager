@@ -14,8 +14,10 @@ export class NatsClient {
         servers: ['nats://localhost:4222', 'nats://localhost:4223', 'nats://localhost:4224'],
         user: 'user',
         pass: 'password',
+        reconnectTimeWait: 10 * 1000, // 10s
       });
     }
+
     return this.client;
   }
 

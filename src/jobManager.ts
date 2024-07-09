@@ -15,6 +15,11 @@ class JobManager extends NatsClient {
     });
   }
 
+  async deleteJobStream(streamName: string) {
+    const jsm = await this.getJetStreamManager();
+    await jsm.streams.delete(streamName);
+  }
+
   async forkExclusiveConsumer<T>(
     queueName: string,
     callback: (msg: T) => Promise<void>,
@@ -73,6 +78,18 @@ class JobManager extends NatsClient {
     } catch (err) {
       console.log(err);
       this.forkExclusiveConsumer(queueName, callback, opts);
+    }
+  }
+
+  async publishToQueue<T>(queueName: string, data: T) {
+    try {
+      const js = await this.getJetStreamClient();
+      await js.publish(queueName, JSONCodec<T>().encode(data), {
+        timeout: 30 * 1000,
+      });
+    } catch (err) {
+      console.log('came here');
+      console.log(err);
     }
   }
 }

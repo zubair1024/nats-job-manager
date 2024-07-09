@@ -4,6 +4,7 @@ import configuration from './utils/configuration';
 import logger from './utils/logger';
 import cacheManager from './cacheManager';
 import jobManager from './jobManager';
+import c from 'config';
 
 async function main() {
   logger.info(`App running in ${configuration.env} env!`);
@@ -14,9 +15,20 @@ async function main() {
   console.log(`getting cache value`);
   const test = await cacheManager.get<{ test: string }>('test');
   console.log(test);
-  await jobManager.forkExclusiveConsumer<{ test: string }>('JOBS', async function (msg) {
-    console.log(msg);
-  });
+  for (let i = 0; i < 1000; i++) {
+    await jobManager.deleteJobStream(`JOBS_${i}`).catch((err) => {
+      console.log(err);
+    });
+    await jobManager.forkExclusiveConsumer<{ test: string }>(`JOBS_${i}`, async function (msg) {
+      console.log(msg);
+    });
+  }
+  for (let i = 0; i < 1000; i++) {
+    for (let j = 0; j < 1000; j++) {
+      console.log(`publishing to queue ${i}`);
+      await jobManager.publishToQueue<{ test: string }>(`JOBS_${i}`, { test: 'test' });
+    }
+  }
 }
 
 process.on('uncaughtException', (error: unknown) => {
